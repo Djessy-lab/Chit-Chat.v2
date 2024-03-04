@@ -8,11 +8,9 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
   const [selectedChild, setSelectedChild] = useState(null);
   const [image, setImage] = useState(null);
 
-  // Simuler des données dynamiques pour les enfants (à remplacer par la récupération réelle de la base de données)
   const [children, setChildren] = useState([]);
 
   useEffect(() => {
-    // Remplacez ce code avec la logique de récupération réelle des enfants depuis votre base de données
     setChildren(childrenData);
   }, [childrenData]);
 
@@ -34,7 +32,6 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
   };
 
   const handleSubmit = () => {
-    // Ajoutez ici la logique pour soumettre le post
     if (content.trim() === '') {
       alert('Veuillez entrer du contenu pour votre post.');
       return;
@@ -45,16 +42,13 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
       return;
     }
 
-    // Appel de la fonction onSubmit avec le contenu du post, l'enfant sélectionné et l'image
     onSubmit({ content, selectedChild, image });
 
-    // Réinitialisation du champ de contenu, de l'enfant et de l'image après soumission
     setContent('');
     setSelectedChild(null);
     setImage(null);
   };
 
-  // Menu pour la sélection de l'enfant
   const [visible, setVisible] = useState(false);
 
   const openMenu = () => setVisible(true);
@@ -66,7 +60,6 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
       <View style={styles.container}>
         <Text style={styles.title}>Nouveau Post</Text>
 
-        {/* Champ de texte pour le contenu du post */}
         <PaperTextInput
           label="Contenu du Post"
           value={content}
@@ -76,12 +69,10 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
           style={styles.contentInput}
         />
 
-        {/* Bouton pour ajouter une image */}
         <PaperButton icon="camera" mode="outlined" onPress={handleImagePick}>
           Ajouter une image
         </PaperButton>
 
-        {/* Affichage de l'image sélectionnée (si elle existe) */}
         {image && (
           <View style={styles.imageContainer}>
             <Text>Image sélectionnée :</Text>
@@ -89,7 +80,6 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
           </View>
         )}
 
-        {/* Sélecteur pour choisir l'enfant à identifier */}
         <Menu
           visible={visible}
           onDismiss={closeMenu}
@@ -98,12 +88,10 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
           {/* {children.map((child) => (
             <Menu.Item key={child.id} onPress={() => handleChildSelect(child)} title={child.name} />
           ))} */}
-          {/* Ajoutez d'autres éléments du menu selon vos besoins */}
           <Divider />
           <Menu.Item onPress={() => handleChildSelect('Autre')} title="Autre" />
         </Menu>
 
-        {/* Bouton de soumission du formulaire */}
         <PaperButton mode="contained" onPress={handleSubmit} style={styles.submitButton}>
           Poster
         </PaperButton>

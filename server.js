@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.get('/api/posts', async (req, res) => {
   try {
-    const data = await prisma.post.findMany(); // Remplacez "votreModel" par le nom de votre modèle Prisma
+    const data = await prisma.post.findMany(); 
     res.json(data);
   } catch (error) {
     console.error('Erreur lors de la récupération des données:', error);
