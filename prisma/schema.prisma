@@ -15,10 +15,11 @@ datasource db {
 }
 
 // Modèle pour représenter un utilisateur (parent ou nounou)
+// Modèle pour représenter un utilisateur (parent ou nounou)
 model User {
   id                Int                 @id @default(autoincrement())
-  prenom            String
-  nom               String
+  prenom            String?
+  nom               String?
   email             String              @unique
   password          String
   role              UserRole            @default(USER)
@@ -29,6 +30,7 @@ model User {
   DailyTransmission DailyTransmission[]
   ChatMessage       ChatMessage[]
 }
+
 
 // Enumération pour représenter le rôle de l'utilisateur
 enum UserRole {
@@ -93,4 +95,3 @@ model ChatMessage {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
-

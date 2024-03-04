@@ -9,6 +9,7 @@ import HomeScreen from './components/Home/HomeScreen';
 import TransmissionsScreen from './components/Tabs/TransmissionsScreen';
 import DocumentsScreen from './components/Tabs/DocumentsScreen';
 import ChatScreen from './components/Tabs/ChatScreen';
+import NewPostScreen from './components/Home/NewPostScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -85,5 +86,6 @@ const HomeStackScreen = () => (
   <Stack.Navigator>
     <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Accueil', headerShown: false }} />
     <Stack.Screen name="Profil" component={ProfilScreen} options={{ tabBarButton: () => null }} />
+    <Stack.Screen name="NewPost" component={NewPostScreen} options={{ tabBarButton: () => null }} />
   </Stack.Navigator>
 );
