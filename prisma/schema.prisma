@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// Modèle pour représenter un utilisateur (parent ou nounou)
+model User {
+  id                Int                 @id @default(autoincrement())
+  prenom            String
+  nom               String
+  email             String              @unique
+  password          String
+  role              UserRole            @default(USER)
+
+  Child             Child[]
+  Post              Post[]
+  SharedDocument    SharedDocument[]
+  DailyTransmission DailyTransmission[]
+  ChatMessage       ChatMessage[]
+}
+
+// Enumération pour représenter le rôle de l'utilisateur
+enum UserRole {
+  USER
+  NOUNOU
+}
+
+// Modèle pour représenter un enfant
+model Child {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  birthDate         DateTime
+  parentId          Int
+  parent            User                @relation(fields: [parentId], references: [id])
+
+  Post              Post[]
+  DailyTransmission DailyTransmission[]
+}
+
+// Modèle pour représenter un post
+model Post {
+  id        Int      @id @default(autoincrement())
+  content   String
+  image     String?
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  childId   Int
+  child     Child    @relation(fields: [childId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// Modèle pour représenter un document partagé
+model SharedDocument {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  // Ajoutez d'autres champs si nécessaire (lien vers le document, etc.)
+}
+
+// Modèle pour représenter une transmission quotidienne
+model DailyTransmission {
+  id        Int      @id @default(autoincrement())
+  content   String
+  diapers   String
+  meals     String
+  sleep     String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  childId   Int
+  child     Child    @relation(fields: [childId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// Modèle pour représenter un message dans la partie chat
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+

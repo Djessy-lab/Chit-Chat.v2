@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@expo/webpack-config": "~19.0.1",
+    "@prisma/client": "^5.10.2",
+    "@react-navigation/bottom-tabs": "^6.5.16",
     "@react-navigation/native": "^6.1.14",
     "@react-navigation/stack": "^6.3.25",
     "expo": "~50.0.8",
@@ -21,7 +23,8 @@
     "react-native-web": "~0.19.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "prisma": "^5.10.2"
   },
   "private": true
 }

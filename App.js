@@ -1,44 +1,89 @@
 import * as React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-function HomeScreen(props) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'start', position: 'relative' }}>
-      <TouchableOpacity
-        style={{ position: 'absolute', top: 20, right: 20, backgroundColor: '#ACCDBC', padding: 10, borderRadius: 100, width: 60, height: 60, alignItems: 'center', justifyContent: 'center'}}
-        onPress={() => {
-          props.navigation.navigate('Profil')
-        }}
-      >
-        <Image
-          source={require('./assets/family.png')}
-          style={{ width: 30, height: 30 }} />
-      </TouchableOpacity>
-      <Text
-        style={{ fontSize: 30, fontWeight: 'bold', marginBottom: 20 }}
-      >ChitChat</Text>
-    </View>
-  )
-}
-
-function ProfilScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Profil</Text>
-    </View>
-  )
-}
+import ProfilButton from './components/Profil/ProfilButton';
+import ProfilScreen from './components/Profil/ProfilScreen';
+import HomeScreen from './components/Home/HomeScreen';
+import TransmissionsScreen from './components/Tabs/TransmissionsScreen';
+import DocumentsScreen from './components/Tabs/DocumentsScreen';
+import ChatScreen from './components/Tabs/ChatScreen';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
+const screenOptions = {
+  headerStyle: {
+    backgroundColor: '#A4D2C1',
+  },
+  headerTintColor: '#fff',
+  headerTitleStyle: {
+    fontSize: 20,
+  },
+};
+
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Accueil" component={HomeScreen} />
-        <Stack.Screen name="Profil" component={ProfilScreen} />
-      </Stack.Navigator>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarActiveTintColor: "#92A96F",
+          tabBarInactiveTintColor: "gray",
+          tabBarIcon: ({ focused, color, size }) => null,
+          tabBarLabelStyle: {
+            fontSize: 12,
+            color: "#FBFCF9",
+            fontWeight: "bold",
+            marginBottom: 5,
+          },
+          tabBarStyle: {
+            backgroundColor: "#A4D2C1",
+            borderTopWidth: 1,
+            borderTopColor: "lightgray",
+          },
+        }}
+      >
+        <Tab.Screen
+          name="Accueil"
+          component={HomeStackScreen}
+          options={({ navigation }) => ({
+            headerRight: () => <ProfilButton navigation={navigation} />,
+            ...screenOptions,
+          })}
+        />
+        <Tab.Screen
+          name="Transmissions"
+          component={TransmissionsScreen}
+          options={({ navigation }) => ({
+            headerRight: () => <ProfilButton navigation={navigation} />,
+            ...screenOptions,
+          })}
+        />
+        <Tab.Screen
+          name="Documents"
+          component={DocumentsScreen}
+          options={({ navigation }) => ({
+            headerRight: () => <ProfilButton navigation={navigation} />,
+            ...screenOptions,
+          })}
+        />
+        <Tab.Screen
+          name="Chat"
+          component={ChatScreen}
+          options={({ navigation }) => ({
+            headerRight: () => <ProfilButton navigation={navigation} />,
+            ...screenOptions,
+          })}
+        />
+      </Tab.Navigator>
     </NavigationContainer>
-  )
+  );
 }
+
+const HomeStackScreen = () => (
+  <Stack.Navigator>
+    <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Accueil', headerShown: false }} />
+    <Stack.Screen name="Profil" component={ProfilScreen} options={{ tabBarButton: () => null }} />
+  </Stack.Navigator>
+);
