@@ -13,6 +13,7 @@ const NewPostButton = ({ navigation }) => (
       height: 60,
       alignItems: 'center',
       justifyContent: 'center',
+      opacity: 0.8,
     }}
     onPress={() => {
       navigation.navigate('NewPost');

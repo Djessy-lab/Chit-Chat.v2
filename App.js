@@ -85,7 +85,7 @@ export default function App() {
 const HomeStackScreen = () => (
   <Stack.Navigator>
     <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Accueil', headerShown: false }} />
-    <Stack.Screen name="Profil" component={ProfilScreen} options={{ tabBarButton: () => null }} />
-    <Stack.Screen name="NewPost" component={NewPostScreen} options={{ tabBarButton: () => null }} />
+    <Stack.Screen name="Profil" component={ProfilScreen} options={{ tabBarButton: () => null, headerShown: false }} />
+    <Stack.Screen name="NewPost" component={NewPostScreen} options={{ tabBarButton: () => null, headerShown: false }} />
   </Stack.Navigator>
 );

@@ -1,18 +1,28 @@
+import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { TextInput as PaperTextInput, Button as PaperButton, Menu, Divider, Provider } from 'react-native-paper';
-import ImagePicker from 'react-native-image-picker';
 
-const NewPostScreen = ({ onSubmit, childrenData }) => {
+const NewPostScreen = ({ navigation }) => {
   const [content, setContent] = useState('');
   const [selectedChild, setSelectedChild] = useState(null);
   const [image, setImage] = useState(null);
-
   const [children, setChildren] = useState([]);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setChildren(childrenData);
-  }, [childrenData]);
+    fetchChildren();
+  }, []);
+
+
+  const fetchChildren = async () => {
+    try {
+      const response = await axios.get('http://192.168.1.23:3000/api/child');
+      setChildren(response.data);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des enfants:', error);
+    }
+  };
 
   const handleContentChange = (text) => {
     setContent(text);
@@ -23,37 +33,40 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
     closeMenu();
   };
 
-  const handleImagePick = () => {
-    ImagePicker.showImagePicker({ mediaType: 'photo' }, (response) => {
-      if (!response.didCancel && !response.error) {
-        setImage(response.uri);
-      }
-    });
+  const handleImageChange = (text) => {
+    setImage(text);
   };
-
-  const handleSubmit = () => {
-    if (content.trim() === '') {
-      alert('Veuillez entrer du contenu pour votre post.');
-      return;
-    }
-
-    if (!selectedChild) {
-      alert('Veuillez sélectionner un enfant.');
-      return;
-    }
-
-    onSubmit({ content, selectedChild, image });
-
-    setContent('');
-    setSelectedChild(null);
-    setImage(null);
-  };
-
-  const [visible, setVisible] = useState(false);
 
   const openMenu = () => setVisible(true);
 
   const closeMenu = () => setVisible(false);
+
+  const handleSubmit = async () => {
+    try {
+      if (content.trim() === '' || !selectedChild || !image) {
+        alert('Veuillez remplir tous les champs.');
+        return;
+      }
+
+      const response = await axios.post('http://192.168.1.23:3000/api/add-post', {
+        content,
+        childId: selectedChild.id,
+        image: image,
+        userId: 16,
+      });
+
+      setContent('');
+      setSelectedChild(null);
+      setImage(null);
+
+      navigation.navigate('Home');
+
+      console.log('Post ajouté avec succès:', response.data);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du post:', error);
+      alert('Erreur lors de l\'ajout du post. Veuillez réessayer.');
+    }
+  };
 
   return (
     <Provider>
@@ -69,13 +82,22 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
           style={styles.contentInput}
         />
 
-        <PaperButton icon="camera" mode="outlined" onPress={handleImagePick}>
-          Ajouter une image
-        </PaperButton>
+        <PaperTextInput
+          label="URL de l'image"
+          value={image}
+          onChangeText={handleImageChange}
+          style={styles.imageInput}
+        />
+
+        {selectedChild && (
+          <Text style={styles.selectedChildText}>
+            Enfant sélectionné : {selectedChild.name}
+          </Text>
+        )}
 
         {image && (
           <View style={styles.imageContainer}>
-            <Text>Image sélectionnée :</Text>
+            <Text>Image :</Text>
             <Image source={{ uri: image }} style={styles.image} />
           </View>
         )}
@@ -85,9 +107,9 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
           onDismiss={closeMenu}
           anchor={<PaperButton onPress={openMenu}>Sélectionner un enfant</PaperButton>}
         >
-          {/* {children.map((child) => (
+          {children.map((child) => (
             <Menu.Item key={child.id} onPress={() => handleChildSelect(child)} title={child.name} />
-          ))} */}
+          ))}
           <Divider />
           <Menu.Item onPress={() => handleChildSelect('Autre')} title="Autre" />
         </Menu>
@@ -102,14 +124,18 @@ const NewPostScreen = ({ onSubmit, childrenData }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: 20,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 30,
+    textAlign: 'center',
   },
   contentInput: {
+    marginBottom: 16,
+  },
+  imageInput: {
     marginBottom: 16,
   },
   imageContainer: {
@@ -121,8 +147,14 @@ const styles = StyleSheet.create({
     height: 100,
     marginTop: 8,
   },
+  selectedChildText: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   submitButton: {
     marginTop: 16,
+    backgroundColor: '#84AD5B',
   },
 });
 

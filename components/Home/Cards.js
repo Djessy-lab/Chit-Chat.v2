@@ -1,15 +1,40 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import axios from 'axios';
+import { useEffect, useState } from "react";
 
 const Cards = ({ post }) => {
+  const [child, setChild] = useState(null);
+
+  useEffect(() => {
+    const fetchChildDetails = async () => {
+      try {
+        const response = await axios.get(`http://192.168.1.23:3000/api/child/${post.childId}`);
+        setChild(response.data);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des détails de l\'enfant:', error);
+      }
+    };
+
+    fetchChildDetails();
+  }, [post.childId]);
+
   const createdAtDate = new Date(post.createdAt);
   const formattedDate = format(createdAtDate, "dd MMMM yyyy", { locale: fr });
 
   return (
     <View style={styles.card}>
       <Image source={{ uri: post.image }} style={styles.cardImage} />
+      {post.user && (
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{post.user.prenom} {post.user.nom}</Text>
+        </View>
+      )}
       <Text style={styles.cardContent}>{post.content}</Text>
+      {child && (
+        <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
+      )}
       <Text style={[styles.cardDate, { alignSelf: "flex-end" }]}>{formattedDate}</Text>
     </View>
   );
@@ -21,14 +46,12 @@ const styles = StyleSheet.create({
     marginTop: 30,
     backgroundColor: 'white',
     borderRadius: 10,
-    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 1.84,
-    elevation: 5,
+    shadowOpacity: 0.20,
+    shadowRadius: 1,
     width: "90%"
   },
   cardImage: {
@@ -44,6 +67,22 @@ const styles = StyleSheet.create({
   cardDate: {
     padding: 5,
     fontSize: 10,
+    marginRight: 5,
+  },
+  cardChildName: {
+    padding: 5,
+    fontSize: 14,
+    marginRight: 15,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 
