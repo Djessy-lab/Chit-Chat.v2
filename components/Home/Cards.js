@@ -1,11 +1,13 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Alert, Button, Image, StyleSheet, Text, TextInput, View } from "react-native";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import axios from 'axios';
 import { useEffect, useState } from "react";
 
-const Cards = ({ post }) => {
+const Cards = ({ post, onDelete, onEdit }) => {
   const [child, setChild] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editedContent, setEditedContent] = useState(post.content);
 
   useEffect(() => {
     const fetchChildDetails = async () => {
@@ -23,19 +25,68 @@ const Cards = ({ post }) => {
   const createdAtDate = new Date(post.createdAt);
   const formattedDate = format(createdAtDate, "dd MMMM yyyy", { locale: fr });
 
+  const handleDeletePress = () => {
+    Alert.alert(
+      "Confirmer la suppression",
+      "Êtes-vous sûr de vouloir supprimer ce post ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        { text: "Supprimer", onPress: () => onDelete(post.id) },
+      ]
+    );
+  };
+
+  const handleEditPress = () => {
+    setEditMode(true);
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await axios.put(`http://192.168.1.23:3000/api/posts/${post.id}`, {
+        content: editedContent,
+      });
+
+      setEditMode(false);
+      onEdit(response.data);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du post:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedContent(post.content);
+    setEditMode(false);
+  };
+
   return (
     <View style={styles.card}>
-      <Image source={{ uri: post.image }} style={styles.cardImage} />
-      {post.user && (
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{post.user.prenom} {post.user.nom}</Text>
-        </View>
+      {editMode ? (
+        <>
+          <TextInput
+            style={styles.editInput}
+            value={editedContent}
+            onChangeText={setEditedContent}
+          />
+          <Button title="Enregistrer" onPress={handleSaveEdit} />
+          <Button title="Annuler" onPress={handleCancelEdit} />
+        </>
+      ) : (
+        <>
+          <Button title="Supprimer" onPress={handleDeletePress} />
+          <Button title="Modifier" onPress={handleEditPress} />
+          <Image source={{ uri: post.image }} style={styles.cardImage} />
+          {post.user && (
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{post.user.prenom} {post.user.nom}</Text>
+            </View>
+          )}
+          <Text style={styles.cardContent}>{post.content}</Text>
+          {child && (
+            <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
+          )}
+          <Text style={[styles.cardDate, { alignSelf: "flex-end" }]}>{formattedDate}</Text>
+        </>
       )}
-      <Text style={styles.cardContent}>{post.content}</Text>
-      {child && (
-        <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
-      )}
-      <Text style={[styles.cardDate, { alignSelf: "flex-end" }]}>{formattedDate}</Text>
     </View>
   );
 };
@@ -83,6 +134,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  editInput: {
+    padding: 15,
+    fontSize: 16,
   },
 });
 

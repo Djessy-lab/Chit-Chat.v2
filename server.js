@@ -52,7 +52,7 @@ app.get('/api/user/:id', async (req, res) => {
     const { id } = req.params;
 
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(id) }, 
+      where: { id: parseInt(id) },
     });
 
     if (!user) {
@@ -94,6 +94,46 @@ app.post('/api/add-post', async (req, res) => {
     res.status(201).json(newPost);
   } catch (error) {
     console.error('Erreur lors de l\'ajout du post:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.put('/api/posts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    const updatedPost = await prisma.post.update({
+      where: { id: parseInt(id) },
+      data: { content },
+    });
+
+    res.json(updatedPost);
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du post:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existingPost = await prisma.post.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({ error: 'Post non trouvé.' });
+    }
+
+    await prisma.post.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.json({ message: 'Post supprimé avec succès.' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du post:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

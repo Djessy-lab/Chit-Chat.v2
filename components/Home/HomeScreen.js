@@ -19,7 +19,7 @@ const HomeScreen = ({ navigation }) => {
         return { ...post, user };
       }));
 
-      setPosts(postsWithUser);
+      setPosts(postsWithUser.reverse());
     } catch (error) {
       console.error('Erreur lors de la récupération des données:', error);
     }
@@ -35,12 +35,32 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
+  const handleDelete = async (postId) => {
+    try {
+      await axios.delete(`http://192.168.1.23:3000/api/posts/${postId}`);
+      fetchData();
+    } catch (error) {
+      console.error('Erreur lors de la suppression du post:', error);
+    }
+  };
+
+  const handleEdit = (updatedPost) => {
+    const postIndex = posts.findIndex((p) => p.id === updatedPost.id);
+
+    if (postIndex !== -1) {
+      const updatedPosts = [...posts];
+      updatedPosts[postIndex] = updatedPost;
+      setPosts(updatedPosts);
+    }
+  };
+
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>ChitChat</Text>
+        <Image source={require('../../assets/logo.png')} style={{ width: 200, height: 120, marginTop: 30, marginBottom: -30 }} />
         {posts.map((post) => (
-          <Cards key={post.id} post={post} />
+          <Cards key={post.id} post={post} onDelete={handleDelete} onEdit={handleEdit} />
         ))}
       </ScrollView>
       <NewPostButton navigation={navigation} />
@@ -52,12 +72,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginTop: 20,
-    color: "#84AD5B",
   },
 });
 
