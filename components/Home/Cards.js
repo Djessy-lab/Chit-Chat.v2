@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import axios from 'axios';
 import { useEffect, useState } from "react";
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Cards = ({ post, onDelete, onEdit }) => {
   const [child, setChild] = useState(null);
@@ -72,8 +73,12 @@ const Cards = ({ post, onDelete, onEdit }) => {
         </>
       ) : (
         <>
-          <Button title="Supprimer" onPress={handleDeletePress} />
-          <Button title="Modifier" onPress={handleEditPress} />
+          <View style={styles.headerCardContainer}>
+            <Text style={styles.cardDate}>{formattedDate}</Text>
+            {child && (
+              <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
+            )}
+          </View>
           <Image source={{ uri: post.image }} style={styles.cardImage} />
           {post.user && (
             <View style={styles.userInfo}>
@@ -81,10 +86,11 @@ const Cards = ({ post, onDelete, onEdit }) => {
             </View>
           )}
           <Text style={styles.cardContent}>{post.content}</Text>
-          {child && (
-            <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
-          )}
-          <Text style={[styles.cardDate, { alignSelf: "flex-end" }]}>{formattedDate}</Text>
+
+          <View style={styles.iconContainer}>
+            <Icon name="trash" size={25} color={'#85c2c2'} onPress={handleDeletePress} />
+            <Icon name="edit" size={25} color={'#85c2c2'} onPress={handleEditPress} />
+          </View>
         </>
       )}
     </View>
@@ -95,7 +101,7 @@ const Cards = ({ post, onDelete, onEdit }) => {
 const styles = StyleSheet.create({
   card: {
     marginTop: 30,
-    backgroundColor: 'white',
+    backgroundColor: '#f6f9f2',
     borderRadius: 10,
     shadowOffset: {
       width: 0,
@@ -139,6 +145,16 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
   },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 5,
+    padding: 10,
+  },
+  headerCardContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  }
 });
 
 export default Cards;

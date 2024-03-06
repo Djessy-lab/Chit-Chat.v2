@@ -1,7 +1,9 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { onAuthStateChanged } from 'firebase/auth';
+import { FIREBASE_AUTH } from './firebase';
 
 import ProfilButton from './components/Profil/ProfilButton';
 import ProfilScreen from './components/Profil/ProfilScreen';
@@ -10,6 +12,7 @@ import TransmissionsScreen from './components/Tabs/TransmissionsScreen';
 import DocumentsScreen from './components/Tabs/DocumentsScreen';
 import ChatScreen from './components/Tabs/ChatScreen';
 import NewPostScreen from './components/Home/NewPostScreen';
+import AuthScreen from './components/Auth/AuthScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -24,7 +27,36 @@ const screenOptions = {
   },
 };
 
+function HomeStackScreen() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Accueil', headerShown: false }} />
+      <Stack.Screen name="Profil" component={ProfilScreen} options={{ tabBarButton: () => null }} />
+      <Stack.Screen name="NewPost" component={NewPostScreen} options={{ tabBarButton: () => null, headerShown: false }} />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (authUser) => {
+      setUser(authUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (!user) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -49,7 +81,7 @@ export default function App() {
           name="Accueil"
           component={HomeStackScreen}
           options={({ navigation }) => ({
-            headerRight: () => <ProfilButton navigation={navigation} />,
+            headerRight: () => <ProfilButton disabled={!user} />,
             ...screenOptions,
           })}
         />
@@ -57,7 +89,7 @@ export default function App() {
           name="Transmissions"
           component={TransmissionsScreen}
           options={({ navigation }) => ({
-            headerRight: () => <ProfilButton navigation={navigation} />,
+            headerRight: () => <ProfilButton disabled={!user} />,
             ...screenOptions,
           })}
         />
@@ -65,7 +97,7 @@ export default function App() {
           name="Documents"
           component={DocumentsScreen}
           options={({ navigation }) => ({
-            headerRight: () => <ProfilButton navigation={navigation} />,
+            headerRight: () => <ProfilButton disabled={!user} />,
             ...screenOptions,
           })}
         />
@@ -73,7 +105,7 @@ export default function App() {
           name="Chat"
           component={ChatScreen}
           options={({ navigation }) => ({
-            headerRight: () => <ProfilButton navigation={navigation} />,
+            headerRight: () => <ProfilButton disabled={!user} />,
             ...screenOptions,
           })}
         />
@@ -81,11 +113,3 @@ export default function App() {
     </NavigationContainer>
   );
 }
-
-const HomeStackScreen = () => (
-  <Stack.Navigator>
-    <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Accueil', headerShown: false }} />
-    <Stack.Screen name="Profil" component={ProfilScreen} options={{ tabBarButton: () => null, headerShown: false }} />
-    <Stack.Screen name="NewPost" component={NewPostScreen} options={{ tabBarButton: () => null, headerShown: false }} />
-  </Stack.Navigator>
-);

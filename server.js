@@ -33,7 +33,7 @@ app.get('/api/child/:id', async (req, res) => {
     const { id } = req.params;
 
     const child = await prisma.child.findUnique({
-      where: { id: parseInt(id) }, // Convertir l'ID en entier
+      where: { id: parseInt(id) },
     });
 
     if (!child) {
