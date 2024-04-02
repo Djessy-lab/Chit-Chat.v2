@@ -1,9 +1,12 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { TextInput as PaperTextInput, Button as PaperButton, Menu, Divider, Provider } from 'react-native-paper';
+import axios from 'axios';
+import { FIREBASE_AUTH } from '../../firebase';
 
 const NewPostScreen = ({ navigation }) => {
+  const auth = FIREBASE_AUTH;
+  const user = auth.currentUser;
   const [content, setContent] = useState('');
   const [selectedChild, setSelectedChild] = useState(null);
   const [image, setImage] = useState(null);
@@ -14,10 +17,9 @@ const NewPostScreen = ({ navigation }) => {
     fetchChildren();
   }, []);
 
-
   const fetchChildren = async () => {
     try {
-      const response = await axios.get('http://192.168.1.23:3000/api/child');
+      const response = await axios.get('http://192.168.1.21:3000/api/child');
       setChildren(response.data);
     } catch (error) {
       console.error('Erreur lors de la récupération des enfants:', error);
@@ -48,11 +50,11 @@ const NewPostScreen = ({ navigation }) => {
         return;
       }
 
-      const response = await axios.post('http://192.168.1.23:3000/api/add-post', {
+      const response = await axios.post('http://192.168.1.21:3000/api/add-post', {
         content,
         childId: selectedChild.id,
         image: image,
-        userId: 16,
+        userId: user.uid,
       });
 
       setContent('');

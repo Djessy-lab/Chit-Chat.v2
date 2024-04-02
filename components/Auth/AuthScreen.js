@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FIREBASE_AUTH } from "../../firebase";
 import { StyleSheet, Text, TextInput, View, Button, ActivityIndicator } from "react-native";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import axios from "axios";
 
 
 const AuthScreen = () => {
@@ -14,7 +15,6 @@ const AuthScreen = () => {
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
     } catch (error) {
       console.log(error);
       alert("Email ou mot de passe incorrect", error.message);
@@ -27,15 +27,23 @@ const AuthScreen = () => {
     setLoading(true);
     try {
       const response = await createUserWithEmailAndPassword(auth, email, password);
-      console.log(response);
-      alert("Vérifiez vos emails pour valider votre compte")
+      const firebaseUid = response.user.uid;
+
+      await axios.post('http://192.168.1.21:3000/api/create-user', {
+        email,
+        password,
+        uid: firebaseUid,
+      });
+
+      alert("Vérifiez vos emails pour valider votre compte");
     } catch (error) {
-      console.log(error);
+      console.error('Erreur lors de la création du compte:', error);
       alert("Echec lors de la création du compte", error.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
+
 
   return (
     <View style={styles.container}>

@@ -13,7 +13,7 @@ const Cards = ({ post, onDelete, onEdit }) => {
   useEffect(() => {
     const fetchChildDetails = async () => {
       try {
-        const response = await axios.get(`http://192.168.1.23:3000/api/child/${post.childId}`);
+        const response = await axios.get(`http://192.168.1.21:3000/api/child/${post.childId}`);
         setChild(response.data);
       } catch (error) {
         console.error('Erreur lors de la récupération des détails de l\'enfant:', error);
@@ -22,6 +22,7 @@ const Cards = ({ post, onDelete, onEdit }) => {
 
     fetchChildDetails();
   }, [post.childId]);
+
 
   const createdAtDate = new Date(post.createdAt);
   const formattedDate = format(createdAtDate, "dd MMMM yyyy", { locale: fr });
@@ -43,7 +44,7 @@ const Cards = ({ post, onDelete, onEdit }) => {
 
   const handleSaveEdit = async () => {
     try {
-      const response = await axios.put(`http://192.168.1.23:3000/api/posts/${post.id}`, {
+      const response = await axios.put(`http://192.168.1.21:3000/api/posts/${post.id}`, {
         content: editedContent,
       });
 
@@ -73,20 +74,31 @@ const Cards = ({ post, onDelete, onEdit }) => {
         </>
       ) : (
         <>
-          <View style={styles.headerCardContainer}>
-            <Text style={styles.cardDate}>{formattedDate}</Text>
-            {child && (
-              <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
-            )}
-          </View>
-          <Image source={{ uri: post.image }} style={styles.cardImage} />
           {post.user && (
             <View style={styles.userInfo}>
+              {post.user.profilePicture ? (
+                <Image
+                  source={{ uri: post.user.profilePicture }}
+                  style={styles.userPhoto}
+                />
+              ) : (
+                <Image
+                  source={require('../../assets/person.png')}
+                  style={styles.placeholderImage}
+                />
+              )}
               <Text style={styles.userName}>{post.user.prenom} {post.user.nom}</Text>
             </View>
           )}
-          <Text style={styles.cardContent}>{post.content}</Text>
 
+          <View style={styles.headerCardContainer}>
+            <Text style={styles.cardDate}>{formattedDate}</Text>
+          </View>
+          <Image source={{ uri: post.image }} style={styles.cardImage} />
+          <Text style={styles.cardContent}>{post.content}</Text>
+          {child && (
+            <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
+          )}
           <View style={styles.iconContainer}>
             <Icon name="trash" size={25} color={'#85c2c2'} onPress={handleDeletePress} />
             <Icon name="edit" size={25} color={'#85c2c2'} onPress={handleEditPress} />
@@ -113,8 +125,9 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: "100%",
-    height: 200,
+    height: 300,
     borderRadius: 0,
+    objectFit: "contain",
     alignSelf: "center",
   },
   cardContent: {
@@ -122,9 +135,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   cardDate: {
-    padding: 5,
     fontSize: 10,
-    marginRight: 5,
+    marginLeft: 45,
   },
   cardChildName: {
     padding: 5,
@@ -133,9 +145,8 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: 5,
   },
   userName: {
     fontSize: 14,
@@ -154,6 +165,19 @@ const styles = StyleSheet.create({
   headerCardContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  userPhoto: {
+    width: 30,
+    height: 30,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  placeholderImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+    backgroundColor: '#ccc', // Couleur de fond du placeholder
   }
 });
 

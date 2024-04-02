@@ -15,12 +15,14 @@ datasource db {
 }
 
 model User {
-  id                Int                 @id @default(autoincrement())
-  prenom            String?
-  nom               String?
-  email             String              @unique
-  password          String
-  role              UserRole            @default(USER)
+  id             String   @id @default(cuid())
+  uid            String?  @unique
+  prenom         String?
+  nom            String?
+  email          String   @unique
+  password       String
+  profilePicture String?
+  role           UserRole @default(USER)
 
   Child             Child[]
   Post              Post[]
@@ -29,60 +31,59 @@ model User {
   ChatMessage       ChatMessage[]
 }
 
-
 enum UserRole {
   USER
   NOUNOU
 }
 
 model Child {
-  id                Int                 @id @default(autoincrement())
-  name              String
-  birthDate         DateTime
-  parentId          Int
-  parent            User                @relation(fields: [parentId], references: [id])
+  id        String   @id @default(cuid())
+  name      String
+  birthDate DateTime
+  parentId  String
+  parent    User     @relation(fields: [parentId], references: [id])
 
   Post              Post[]
   DailyTransmission DailyTransmission[]
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   content   String
   image     String?
-  userId    Int
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
-  childId   Int
+  childId   String
   child     Child    @relation(fields: [childId], references: [id])
   createdAt DateTime @default(now())
 }
 
 model SharedDocument {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   title     String
   content   String
-  userId    Int
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
 
 model DailyTransmission {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   content   String
-  diapers   String
-  meals     String
-  sleep     String
-  userId    Int
+  diapers   Int
+  meals     Int
+  sleep     Int
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
-  childId   Int
+  childId   String
   child     Child    @relation(fields: [childId], references: [id])
   createdAt DateTime @default(now())
 }
 
 model ChatMessage {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   content   String
-  userId    Int
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }

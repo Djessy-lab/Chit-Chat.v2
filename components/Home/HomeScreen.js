@@ -1,5 +1,6 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
 import Cards from "./Cards";
 import NewPostButton from "./NewPostButton";
@@ -10,16 +11,18 @@ const HomeScreen = ({ navigation }) => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://192.168.1.23:3000/api/posts');
+      const response = await axios.get('http://192.168.1.21:3000/api/posts');
 
       const postsWithUser = await Promise.all(response.data.map(async (post) => {
-        const userResponse = await axios.get(`http://192.168.1.23:3000/api/user/${post.userId}`);
+        const userResponse = await axios.get(`http://192.168.1.21:3000/api/user/${post.userId}`);
         const user = userResponse.data;
 
         return { ...post, user };
       }));
 
-      setPosts(postsWithUser.reverse());
+      const sortedPosts = postsWithUser.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setPosts(sortedPosts);
     } catch (error) {
       console.error('Erreur lors de la récupération des données:', error);
     }
@@ -37,7 +40,7 @@ const HomeScreen = ({ navigation }) => {
 
   const handleDelete = async (postId) => {
     try {
-      await axios.delete(`http://192.168.1.23:3000/api/posts/${postId}`);
+      await axios.delete(`http://192.168.1.21:3000/api/posts/${postId}`);
       fetchData();
     } catch (error) {
       console.error('Erreur lors de la suppression du post:', error);

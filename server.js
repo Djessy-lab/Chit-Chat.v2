@@ -1,12 +1,107 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const multer = require('multer');
+const { FIREBASE_STORAGE } = require('./firebase');
+const { ref, uploadBytes, getDownloadURL } = require('firebase/storage');
+
 
 const prisma = new PrismaClient();
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage: storage,
+  limits: { fieldSize: 55 * 1024 * 1024 },
+});
+
+app.use('/api/update-user/:email', upload.single('profilePicture'), async (req, res, next) => {
+  req.body.profilePictureData = req.file?.buffer;
+  next();
+});
+
+app.put('/api/update-user/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { prenom, nom, role, profilePictureData, filename } = req.body;
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { email },
+      data: {
+        prenom: prenom || existingUser.prenom,
+        nom: nom || existingUser.nom,
+        role: role || existingUser.role,
+      },
+    });
+
+    let updatedProfilePictureUrl = existingUser.profilePicture;
+
+    if (profilePictureData) {
+      const storageRef = ref(FIREBASE_STORAGE, `profilePicture/${email}/${filename}`);
+      const metadata = { contentType: 'image/jpeg' };
+
+      await uploadBytes(storageRef, profilePictureData, metadata);
+
+      updatedProfilePictureUrl = await getDownloadURL(storageRef);
+
+
+      await prisma.user.update({
+        where: { email },
+        data: {
+          profilePicture: updatedProfilePictureUrl,
+        },
+      });
+    }
+    res.json({ message: 'Mise à jour réussie.', profilePictureUrl: updatedProfilePictureUrl });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de l\'utilisateur avec photo de profil:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+
+
+
+app.get('/api/get-user/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+    }
+
+    res.json({
+      prenom: user.prenom,
+      nom: user.nom,
+      role: user.role,
+      profilePicture: user.profilePicture,
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données du profil:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+
+
+
 
 app.get('/api/posts', async (req, res) => {
   try {
@@ -33,7 +128,7 @@ app.get('/api/child/:id', async (req, res) => {
     const { id } = req.params;
 
     const child = await prisma.child.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: id },
     });
 
     if (!child) {
@@ -52,7 +147,7 @@ app.get('/api/user/:id', async (req, res) => {
     const { id } = req.params;
 
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: id },
     });
 
     if (!user) {
@@ -104,7 +199,7 @@ app.put('/api/posts/:id', async (req, res) => {
     const { content } = req.body;
 
     const updatedPost = await prisma.post.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: { content },
     });
 
@@ -120,7 +215,7 @@ app.delete('/api/posts/:id', async (req, res) => {
     const { id } = req.params;
 
     const existingPost = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: id },
     });
 
     if (!existingPost) {
@@ -128,7 +223,7 @@ app.delete('/api/posts/:id', async (req, res) => {
     }
 
     await prisma.post.delete({
-      where: { id: parseInt(id) },
+      where: { id: id },
     });
 
     res.json({ message: 'Post supprimé avec succès.' });
@@ -139,6 +234,34 @@ app.delete('/api/posts/:id', async (req, res) => {
 });
 
 
+app.post('/api/create-user', async (req, res) => {
+  try {
+    const { email, password, uid } = req.body;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Un utilisateur avec cette adresse e-mail existe déjà.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        id: uid,
+      },
+    });
+
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'utilisateur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 
