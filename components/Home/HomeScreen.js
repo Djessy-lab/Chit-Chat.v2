@@ -12,9 +12,8 @@ const HomeScreen = ({ navigation }) => {
   const fetchData = async () => {
     try {
       const response = await axios.get('http://192.168.1.21:3000/api/posts');
-
       const postsWithUser = await Promise.all(response.data.map(async (post) => {
-        const userResponse = await axios.get(`http://192.168.1.21:3000/api/user/${post.userId}`);
+        const userResponse = await axios.get(`http://192.168.1.21:3000/api/user/get-user/${post.userId}`);
         const user = userResponse.data;
 
         return { ...post, user };

@@ -53,7 +53,8 @@ const ProfilScreen = ({ navigation }) => {
 
   const fetchUserProfileFromServer = async () => {
     try {
-      const userProfileResponse = await fetch(`http://192.168.1.21:3000/api/get-user/${user.email}`);
+      console.log(user);
+      const userProfileResponse = await fetch(`http://192.168.1.21:3000/api/user/get-user/${user.uid}`);
       if (userProfileResponse.ok) {
         const userProfileData = await userProfileResponse.json();
         setPrenom(userProfileData.prenom || "");

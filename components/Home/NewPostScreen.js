@@ -50,7 +50,7 @@ const NewPostScreen = ({ navigation }) => {
         return;
       }
 
-      const response = await axios.post('http://192.168.1.21:3000/api/add-post', {
+      const response = await axios.post('http://192.168.1.21:3000/api/posts', {
         content,
         childId: selectedChild.id,
         image: image,
