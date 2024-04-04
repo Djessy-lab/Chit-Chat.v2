@@ -22,3 +22,32 @@ exports.createDailyTransmission = async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };
+
+exports.getAllDailyTransmissions = async (req, res) => {
+  try {
+      const transmissions = await prisma.dailyTransmission.findMany();
+      res.json(transmissions);
+  } catch (error) {
+      console.error('Erreur lors de la récupération des transmissions:', error);
+      res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+exports.getDailyTransmissionById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const transmission = await prisma.dailyTransmission.findUnique({
+          where: { id },
+      });
+
+      if (!transmission) {
+          return res.status(404).json({ message: 'Transmission non trouvée.' });
+      }
+
+      res.json(transmission);
+  } catch (error) {
+      console.error('Erreur lors de la récupération de la transmission:', error);
+      res.status(500).json({ error: 'Erreur serveur' });
+  }
+};

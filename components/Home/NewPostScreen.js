@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Button } from 'react-native';
 import { TextInput as PaperTextInput, Button as PaperButton, Menu, Divider, Provider } from 'react-native-paper';
 import axios from 'axios';
 import { FIREBASE_AUTH } from '../../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { FIREBASE_STORAGE } from '../../firebase';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const NewPostScreen = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
@@ -35,25 +39,64 @@ const NewPostScreen = ({ navigation }) => {
     closeMenu();
   };
 
-  const handleImageChange = (text) => {
-    setImage(text);
+  const handleChooseImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission d\'accès à la bibliothèque photo refusée!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [],
+        { compress: 0.4 }
+      );
+      setImage(compressedImage.uri);
+    }
   };
+
+  const uploadImage = async (uri) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const storageRef = ref(FIREBASE_STORAGE, `posts/${user.uid}/${new Date().toISOString()}`);
+      await uploadBytes(storageRef, blob);
+      return getDownloadURL(storageRef);
+    } catch (error) {
+      console.error("Erreur lors de l'upload de l'image :", error);
+      throw error;
+    }
+  };
+
 
   const openMenu = () => setVisible(true);
 
   const closeMenu = () => setVisible(false);
 
   const handleSubmit = async () => {
+    if (content.trim() === '' || !selectedChild) {
+      alert('Veuillez remplir tous les champs.');
+      return;
+    }
+
     try {
-      if (content.trim() === '' || !selectedChild || !image) {
-        alert('Veuillez remplir tous les champs.');
-        return;
+      let imageUrl = '';
+      if (image) {
+        imageUrl = await uploadImage(image);
       }
 
       const response = await axios.post('http://192.168.1.21:3000/api/posts', {
         content,
         childId: selectedChild.id,
-        image: image,
+        image: imageUrl,
         userId: user.uid,
       });
 
@@ -84,24 +127,21 @@ const NewPostScreen = ({ navigation }) => {
           style={styles.contentInput}
         />
 
-        <PaperTextInput
-          label="URL de l'image"
-          value={image}
-          onChangeText={handleImageChange}
-          style={styles.imageInput}
-        />
-
-        {selectedChild && (
-          <Text style={styles.selectedChildText}>
-            Enfant sélectionné : {selectedChild.name}
-          </Text>
-        )}
+        <Button title="Choisir une image" onPress={handleChooseImage} />
 
         {image && (
           <View style={styles.imageContainer}>
             <Text>Image :</Text>
             <Image source={{ uri: image }} style={styles.image} />
           </View>
+        )}
+
+
+
+        {selectedChild && (
+          <Text style={styles.selectedChildText}>
+            Enfant sélectionné : {selectedChild.name}
+          </Text>
         )}
 
         <Menu

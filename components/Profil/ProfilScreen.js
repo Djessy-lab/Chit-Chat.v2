@@ -4,56 +4,27 @@ import { FIREBASE_AUTH, FIREBASE_STORAGE } from "../../firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import * as ImagePicker from 'expo-image-picker';
 import ProfileForm from "./ProfilForm";
-import { ref, uploadString, getDownloadURL, uploadBytes } from 'firebase/storage';
-import * as FileSystem from 'expo-file-system';
-
-
+import { ref, getDownloadURL, uploadBytes } from 'firebase/storage';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const ProfilScreen = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
   const [user, setUser] = useState(auth.currentUser);
   const [isProfileFormVisible, setProfileFormVisibility] = useState(false);
-
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
   const [role, setRole] = useState("USER");
   const [profilePicture, setProfilePicture] = useState(null);
-  const [formData, setFormData] = useState(new FormData());
   const [savePhoto, setSavePhoto] = useState(false);
 
-  const convertImageToBase64 = async (uri) => {
-    try {
-      if (uri.startsWith('http')) {
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        const reader = new FileReader();
-
-        return new Promise((resolve, reject) => {
-          reader.onload = () => {
-            resolve(reader.result.split(',')[1]);
-          };
-
-          reader.onerror = (error) => {
-            reject(error);
-          };
-
-          reader.readAsDataURL(blob);
-        });
-      } else {
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-        return base64;
-      }
-    } catch (error) {
-      console.error('Erreur lors de la conversion de l\'image :', error);
-      throw error;
+  useEffect(() => {
+    if (user) {
+      fetchUserProfileFromServer();
     }
-  };
-
-
+  }, [user]);
 
   const fetchUserProfileFromServer = async () => {
     try {
-      console.log(user);
       const userProfileResponse = await fetch(`http://192.168.1.21:3000/api/user/get-user/${user.uid}`);
       if (userProfileResponse.ok) {
         const userProfileData = await userProfileResponse.json();
@@ -69,60 +40,33 @@ const ProfilScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchUserProfileFromServer();
-    }
-  }, [user]);
-
   const handleUpdateProfile = async () => {
     try {
-      await updateProfile(user, { displayName: `${prenom} ${nom}` });
-
-      const formData = new FormData();
-      formData.append('prenom', prenom);
-      formData.append('nom', nom);
-      formData.append('role', role);
-      formData.append('email', user.email);
-
-      if (profilePicture) {
-        const timestamp = new Date().getTime();
-        const filename = `${timestamp}_${profilePicture.split('/').pop()}`;
-        const base64Image = await convertImageToBase64(profilePicture);
-
-        formData.append('filename', filename);
-
-        const image = {
-          uri: profilePicture,
-          name: filename,
-          contentType: 'image/jpeg',
-        };
-
-        formData.append('profilePicture', image);
-        formData.append('profilePictureBase64', base64Image);
-
-        const storageRef = ref(FIREBASE_STORAGE, `profilePicture/${user.email}/${filename}`);
-        await uploadString(storageRef, base64Image);
-        const downloadURL = await getDownloadURL(storageRef);
-
-        formData.append('profilePicture', downloadURL);
+      if (!prenom || !nom || !role) {
+        alert('Veuillez remplir tous les champs.');
+        return;
       }
 
-      const updateUserResponse = await fetch(`http://192.168.1.21:3000/api/update-user/${user.email}`, {
+      await updateProfile(user, { displayName: `${prenom} ${nom}` });
+
+      let imageUrl = profilePicture;
+      if (profilePicture && savePhoto) {
+        imageUrl = await uploadImage(profilePicture);
+      }
+
+      const response = await fetch(`http://192.168.1.21:3000/api/user/update-user/${user.uid}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prenom, nom, role, profilePicture: imageUrl }),
       });
 
-      if (updateUserResponse.ok) {
-        const responseData = await updateUserResponse.json();
+      if (response.ok) {
         alert("Succès", "Informations mises à jour avec succès !");
+        setProfilePicture(imageUrl);
         setProfileFormVisibility(false);
+        fetchUserProfileFromServer();
       } else {
-        const errorDetails = await updateUserResponse.json();
-        console.error('Erreur lors de la mise à jour des informations:', errorDetails);
+        const errorDetails = await response.json();
         alert("Erreur", "Erreur lors de la mise à jour des informations.");
       }
     } catch (error) {
@@ -133,58 +77,69 @@ const ProfilScreen = ({ navigation }) => {
 
 
   const handleChoosePhoto = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Permission d\'accès à la bibliothèque photo refusée!');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.5,
-      });
-
-      if (!result.canceled) {
-        const selectedImage = result.assets && result.assets[0];
-
-        if (selectedImage) {
-          setProfilePicture(selectedImage.uri);
-          setSavePhoto(true);
-        }
-      }
-    } catch (error) {
-      console.error('Erreur lors du choix de la photo:', error);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission d\'accès à la bibliothèque photo refusée!');
+      return;
     }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.4,
+    });
+
+    if (!result.canceled && result.assets) {
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [],
+        { compress: 0.5 }
+      );
+      setProfilePicture(compressedImage.uri);
+      setSavePhoto(true);
+    }
+  };
+
+  const uploadImage = async (uri) => {
+    const blob = await (await fetch(uri)).blob();
+    const filename = uri.split('/').pop();
+    const storageRef = ref(FIREBASE_STORAGE, `profilePicture/${user.uid}/${filename}`);
+    await uploadBytes(storageRef, blob);
+    return getDownloadURL(storageRef);
   };
 
   const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigation.navigate("Auth");
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-    }
+    await signOut(auth);
+    navigation.navigate("Auth");
   };
 
-  const handleCancelProfileForm = () => {
-    setProfileFormVisibility(false);
-  };
+  const handleCancelProfileForm = () => setProfileFormVisibility(false);
 
   const handleSavePhoto = async () => {
-    handleUpdateProfile();
-    setSavePhoto(false);
-  }
+    if (!profilePicture) {
+      alert('Aucune photo sélectionnée');
+      return;
+    }
 
+    try {
+      const blob = await fetch(profilePicture).then(res => res.blob());
+      const filename = `${Date.now()}_${profilePicture.split('/').pop()}`;
+      const storageRef = ref(FIREBASE_STORAGE, `profilePicture/${user.uid}/${filename}`);
+      await uploadBytes(storageRef, blob);
+
+      const downloadURL = await getDownloadURL(storageRef);
+      handleUpdateProfile(downloadURL);
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de l\'image :', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       {user && (
         <>
           <Text style={styles.email}>Email: {user.email}</Text>
-
           {isProfileFormVisible ? (
             <ProfileForm
               prenom={prenom}
@@ -201,18 +156,10 @@ const ProfilScreen = ({ navigation }) => {
             <>
               <TouchableOpacity onPress={handleChoosePhoto}>
                 <View style={styles.profilePictureContainer}>
-                  {profilePicture ? (
-                    <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
-                  ) : (
-                    <Image source={require('../../assets/person.png')} style={styles.profilePicture} />
-                  )}
+                  <Image source={{ uri: profilePicture || '../../assets/person.png' }} style={styles.profilePicture} />
                 </View>
               </TouchableOpacity>
-              <View style={styles.buttonContainer}>
-                {savePhoto && (
-                  <Button title="Enregistrer la photo" onPress={() => handleSavePhoto()} />
-                )}
-              </View>
+              {savePhoto && <Button title="Enregistrer la photo" onPress={handleSavePhoto} />}
               <Button title="Modifier le profil" onPress={() => setProfileFormVisibility(true)} />
               <Button title="Se déconnecter" onPress={handleSignOut} />
             </>

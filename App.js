@@ -8,11 +8,12 @@ import { FIREBASE_AUTH } from './firebase';
 import ProfilButton from './components/Profil/ProfilButton';
 import ProfilScreen from './components/Profil/ProfilScreen';
 import HomeScreen from './components/Home/HomeScreen';
-import TransmissionsScreen from './components/Tabs/TransmissionsScreen';
+import TransmissionsScreen from './components/Tabs/Transmissions/TransmissionsScreen';
 import DocumentsScreen from './components/Tabs/DocumentsScreen';
 import ChatScreen from './components/Tabs/ChatScreen';
 import NewPostScreen from './components/Home/NewPostScreen';
 import AuthScreen from './components/Auth/AuthScreen';
+import TransmissionDetailsScreen from './components/Tabs/Transmissions/TransmissionDetailsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,6 +37,24 @@ function HomeStackScreen() {
     </Stack.Navigator>
   );
 }
+
+function TransmissionsStackScreen({ user }) {
+  return (
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen
+        name="TransmissionsList"
+        component={TransmissionsScreen}
+        options={{ headerShown: false}}
+      />
+      <Stack.Screen
+        name="TransmissionDetails"
+        component={TransmissionDetailsScreen}
+        options={{ title: 'Détails de la transmission' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -87,12 +106,13 @@ export default function App() {
         />
         <Tab.Screen
           name="Transmissions"
-          component={TransmissionsScreen}
           options={({ navigation }) => ({
             headerRight: () => <ProfilButton disabled={!user} />,
             ...screenOptions,
           })}
-        />
+        >
+          {() => <TransmissionsStackScreen user={user} />}
+        </Tab.Screen>
         <Tab.Screen
           name="Documents"
           component={DocumentsScreen}
