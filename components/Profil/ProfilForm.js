@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useRef } from "react";
 import { View, Text, Button, StyleSheet, TextInput, Image } from "react-native";
 import { Picker } from '@react-native-picker/picker';
 
 const ProfileForm = ({ prenom, nom, role, setPrenom, setNom, setRole, onSubmit, onCancel, profilePicture }) => {
+  const nextInput = useRef();
+
   return (
     <View style={styles.container}>
       <Text>Profil de l'utilisateur</Text>
@@ -16,8 +18,12 @@ const ProfileForm = ({ prenom, nom, role, setPrenom, setNom, setRole, onSubmit, 
         style={styles.input}
         placeholder="Prénom"
         onChangeText={setPrenom}
+        returnKeyType="next"
+        onSubmitEditing={() => nextInput.current.focus()}
+        blurOnSubmit={false}
       />
-      <TextInput value={nom} style={styles.input} placeholder="Nom" onChangeText={setNom} />
+      <TextInput ref={nextInput} value={nom} style={styles.input} placeholder="Nom" onChangeText={setNom} returnKeyType="done"
+        onSubmitEditing={() => console.log('Done!')} />
 
       <Picker
         selectedValue={role}

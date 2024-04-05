@@ -14,7 +14,7 @@ const FilterMenu = ({
   children,
   setSelectedChildId
 }) => {
-  const uniqueDates = Array.from(new Set(dailyTransmissions.map(transmission => new Date(transmission.createdAt).toLocaleDateString())));
+  const uniqueDates = Array.from(new Set(dailyTransmissions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(transmission => new Date(transmission.createdAt).toLocaleDateString())));
   return (
     <View>
       <Menu

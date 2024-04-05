@@ -14,6 +14,7 @@ import ChatScreen from './components/Tabs/ChatScreen';
 import NewPostScreen from './components/Home/NewPostScreen';
 import AuthScreen from './components/Auth/AuthScreen';
 import TransmissionDetailsScreen from './components/Tabs/Transmissions/TransmissionDetailsScreen';
+import { Keyboard, TouchableWithoutFeedback } from 'react-native';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -44,12 +45,14 @@ function TransmissionsStackScreen({ user }) {
       <Stack.Screen
         name="TransmissionsList"
         component={TransmissionsScreen}
-        options={{ headerShown: false}}
+        options={{ headerShown: false }}
+        initialParams={{ userId: user ? user.uid : null }}
       />
       <Stack.Screen
         name="TransmissionDetails"
         component={TransmissionDetailsScreen}
         options={{ title: 'Détails de la transmission' }}
+        initialParams={{ userId: user ? user.uid : null }}
       />
     </Stack.Navigator>
   );
@@ -68,11 +71,13 @@ export default function App() {
 
   if (!user) {
     return (
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </TouchableWithoutFeedback>
     );
   }
 

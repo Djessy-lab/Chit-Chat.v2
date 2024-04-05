@@ -100,6 +100,7 @@ const NewPostScreen = ({ navigation }) => {
         userId: user.uid,
       });
 
+
       setContent('');
       setSelectedChild(null);
       setImage(null);

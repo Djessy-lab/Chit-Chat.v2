@@ -15,8 +15,10 @@ const TransmissionList = ({ dailyTransmissions, children, handleTransmissionDeta
             return (
               <TouchableOpacity key={index} style={itemStyle} onPress={() => handleTransmissionDetails(transmission)}>
                 <Text style={styles.dailyTransmissionsButton}>{transmission.content}</Text>
-                <Text>{childName}</Text>
-                <Text>{new Date(transmission.createdAt).toLocaleDateString('fr')}</Text>
+                <View style={styles.containNameDate}>
+                  <Text style={styles.nameDateText}>{childName}</Text>
+                  <Text style={styles.nameDateText}>{new Date(transmission.createdAt).toLocaleDateString('fr')}</Text>
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -37,6 +39,14 @@ const styles = StyleSheet.create({
   dailyContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  containNameDate:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  nameDateText:{
+    fontSize: 12,
+    color: '#1A1E11',
   },
   item: {
     width: '50%',

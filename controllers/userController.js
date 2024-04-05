@@ -36,30 +36,67 @@ exports.createUser = async (req, res) => {
 
 exports.getUser = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { uid } = req.params;
 
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { uid },
+      include: {
+        children: {
+          include: {
+            id: true,
+            name: true,
+          },
+          include: {
+            child: {
+              include: {
+                users: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
       return res.status(404).send('Utilisateur non trouvé.');
     }
 
-    res.json(user);
+    const userData = {
+      ...user,
+      children: user.children.map(({ child }) => ({
+        id: child.id, // Incluez l'ID de l'enfant dans les données
+        name: child.name,
+        birthDate: child.birthDate,
+        associatedUsers: child.users.map(({ user }) => ({
+          uid: user.uid,
+          prenom: user.prenom,
+          nom: user.nom,
+          email: user.email,
+          role: user.role,
+        })),
+      })),
+    };
+
+    res.json(userData);
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'utilisateur:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };
 
+
+
 exports.updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { prenom, nom, role, profilePicture, filename } = req.body;
+    const { uid } = req.params;
+    const { prenom, nom, role, profilePicture } = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { id: id },
+      where: { uid },
     });
 
     if (!user) {
@@ -67,23 +104,16 @@ exports.updateUser = async (req, res) => {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: id },
+      where: { uid },
       data: {
         prenom,
         nom,
         role,
+        profilePicture,
       },
     });
 
-    let updatedProfilePictureUrl = user.profilePicture;
-    if (profilePicture) {
-      await prisma.user.update({
-        where: { id },
-        data: { profilePicture: profilePicture },
-      });
-    }
-
-    res.json({ message: 'Mise à jour réussie', updatedUser, profilePictureUrl: updatedProfilePictureUrl });
+    res.json({ message: 'Mise à jour réussie', updatedUser });
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
     res.status(500).json({ error: 'Erreur serveur' });

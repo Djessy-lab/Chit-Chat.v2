@@ -5,10 +5,71 @@ import axios from 'axios';
 import { useEffect, useState } from "react";
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const Cards = ({ post, onDelete, onEdit }) => {
+const Cards = ({ post, onDelete, onEdit, currentUserId }) => {
   const [child, setChild] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content);
+  const [user, setUser] = useState(null);
+  const [likes, setLikes] = useState(post.likes.length);
+  const [userHasLiked, setUserHasLiked] = useState(post.likes.includes(currentUserId));
+  const [comments, setComments] = useState(post.comments);
+  const [newComment, setNewComment] = useState('');
+
+
+  const toggleLike = async () => {
+    if (userHasLiked) {
+      setLikes(likes - 1);
+      setUserHasLiked(false);
+
+      try {
+        await axios.delete(`http://192.168.1.21:3000/api/posts/${post.id}/likes`, { data: { userId: currentUserId } });
+      } catch (error) {
+        console.error('Erreur lors de la suppression du like :', error);
+      }
+    } else {
+      setLikes(likes + 1);
+      setUserHasLiked(true);
+
+      try {
+        await axios.post(`http://192.168.1.21:3000/api/posts/${post.id}/likes`, { userId: currentUserId });
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout du like :', error);
+      }
+    }
+  };
+
+  const submitComment = async () => {
+    if (newComment.trim()) {
+      try {
+        const response = await axios.post(`http://192.168.1.21:3000/api/${post.id}/comments`, {
+          userId: currentUserId,
+          content: newComment,
+        });
+
+        const updatedComments = [...comments, response.data];
+        setComments(updatedComments);
+        setNewComment('');
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout d\'un commentaire :', error);
+      }
+    }
+  };
+
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        if (post.userId) {
+          const response = await axios.get(`http://192.168.1.21:3000/api/user/get-user/${post.userId}`);
+          setUser(response.data);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des détails de l\'utilisateur:', error);
+      }
+    };
+
+    fetchUserDetails();
+  }, [post.userId]);
 
   useEffect(() => {
     const fetchChildDetails = async () => {
@@ -74,11 +135,11 @@ const Cards = ({ post, onDelete, onEdit }) => {
         </>
       ) : (
         <>
-          {post.user && (
+          {user && (
             <View style={styles.userInfo}>
-              {post.user.profilePicture ? (
+              {user.profilePicture ? (
                 <Image
-                  source={{ uri: post.user.profilePicture }}
+                  source={{ uri: user.profilePicture }}
                   style={styles.userPhoto}
                 />
               ) : (
@@ -87,7 +148,7 @@ const Cards = ({ post, onDelete, onEdit }) => {
                   style={styles.placeholderImage}
                 />
               )}
-              <Text style={styles.userName}>{post.user.prenom} {post.user.nom}</Text>
+              <Text style={styles.userName}>{user.prenom} {user.nom}</Text>
             </View>
           )}
 
@@ -99,10 +160,27 @@ const Cards = ({ post, onDelete, onEdit }) => {
           {child && (
             <Text style={[styles.cardChildName, { alignSelf: "flex-end" }]}>{child.name}</Text>
           )}
-          <View style={styles.iconContainer}>
-            <Icon name="trash" size={25} color={'#85c2c2'} onPress={handleDeletePress} />
-            <Icon name="edit" size={25} color={'#85c2c2'} onPress={handleEditPress} />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Icon name="heart" size={25} color={userHasLiked ? 'red' : 'grey'} onPress={toggleLike} />
+            <Text>{likes}</Text>
           </View>
+          {comments.map((comment, index) => (
+            <View key={index}>
+              <Text>{comment.userId === currentUserId ? 'Vous' : 'Someone'}: {comment.content}</Text>
+            </View>
+          ))}
+          <TextInput
+            value={newComment}
+            onChangeText={setNewComment}
+            placeholder="Add a comment..."
+          />
+          <Button title="Comment" onPress={submitComment} />
+          {currentUserId === post.userId && (
+            <View style={styles.iconContainer}>
+              <Icon name="trash" size={25} color={'#85c2c2'} onPress={handleDeletePress} />
+              <Icon name="edit" size={25} color={'#85c2c2'} onPress={handleEditPress} />
+            </View>
+          )}
         </>
       )}
     </View>
@@ -177,7 +255,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginRight: 10,
-    backgroundColor: '#ccc', // Couleur de fond du placeholder
+    backgroundColor: '#ccc',
   }
 });
 

@@ -1,10 +1,11 @@
-// routes/dailyTransmissionRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createDailyTransmission, getAllDailyTransmissions, getDailyTransmissionById, } = require('../controllers/dailyTransmissionController');
+const dailyTransmissionController = require('../controllers/dailyTransmissionController');
 
-router.post('/', createDailyTransmission);
-router.get('/', getAllDailyTransmissions);
-router.get('/:id', getDailyTransmissionById);
+router.post('/', dailyTransmissionController.createDailyTransmission);
+router.get('/', dailyTransmissionController.getAllDailyTransmissions);
+router.get('/:id', dailyTransmissionController.getDailyTransmissionById);
+router.delete('/:userId/:id', dailyTransmissionController.deleteDailyTransmission);
+
 
 module.exports = router;

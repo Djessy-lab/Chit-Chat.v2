@@ -1,25 +1,37 @@
 import axios from "axios";
-import * as React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
 import Cards from "./Cards";
 import NewPostButton from "./NewPostButton";
 import { useFocusEffect } from '@react-navigation/native';
+import { FIREBASE_AUTH } from "../../firebase";
 
 const HomeScreen = ({ navigation }) => {
+  const auth = FIREBASE_AUTH;
   const [posts, setPosts] = useState([]);
 
-  const fetchData = async () => {
+  const fetchChildren = async () => {
     try {
+      const response = await axios.get(`http://192.168.1.21:3000/api/user/get-user/${auth.currentUser.uid}`);
+      return response.data.children;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des enfants:', error);
+    }
+  };
+
+
+  const fetchPosts = async () => {
+    try {
+      const children = await fetchChildren();
+
       const response = await axios.get('http://192.168.1.21:3000/api/posts');
-      const postsWithUser = await Promise.all(response.data.map(async (post) => {
-        const userResponse = await axios.get(`http://192.168.1.21:3000/api/user/get-user/${post.userId}`);
-        const user = userResponse.data;
+      const allPosts = response.data;
 
-        return { ...post, user };
-      }));
+      const filteredPosts = allPosts.filter(post => {
+        return children && children.some(child => post.childId === child.id);
+      });
 
-      const sortedPosts = postsWithUser.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const sortedPosts = filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setPosts(sortedPosts);
     } catch (error) {
@@ -27,20 +39,21 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchData();
-    }, [])
-  );
 
   useEffect(() => {
-    fetchData();
+    fetchPosts();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [])
+  );
 
   const handleDelete = async (postId) => {
     try {
       await axios.delete(`http://192.168.1.21:3000/api/posts/${postId}`);
-      fetchData();
+      fetchPosts();
     } catch (error) {
       console.error('Erreur lors de la suppression du post:', error);
     }
@@ -56,13 +69,12 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
         <Image source={require('../../assets/logo.png')} style={{ width: 200, height: 120, marginTop: 30, marginBottom: -30 }} />
         {posts.map((post) => (
-          <Cards key={post.id} post={post} onDelete={handleDelete} onEdit={handleEdit} />
+          <Cards key={post.id} post={post} onDelete={handleDelete} onEdit={handleEdit} currentUserId={auth.currentUser.uid} />
         ))}
       </ScrollView>
       <NewPostButton navigation={navigation} />

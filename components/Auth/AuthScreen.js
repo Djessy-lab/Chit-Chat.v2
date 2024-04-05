@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { FIREBASE_AUTH } from "../../firebase";
 import { StyleSheet, Text, TextInput, View, Button, ActivityIndicator } from "react-native";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
@@ -29,7 +29,7 @@ const AuthScreen = () => {
       const response = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUid = response.user.uid;
 
-      await axios.post('http://192.168.1.21:3000/api/create-user', {
+      await axios.post('http://192.168.1.21:3000/api/user/create-user', {
         email,
         password,
         uid: firebaseUid,
@@ -44,11 +44,16 @@ const AuthScreen = () => {
     }
   };
 
+  const nextInput = useRef();
+
 
   return (
     <View style={styles.container}>
-      <TextInput value={email} style={styles.input} placeholder="Email" autoCapitalize="none" onChangeText={(text) => setEmail(text)}></TextInput>
-      <TextInput secureTextEntry={true} value={password} style={styles.input} placeholder="Mot de passe" autoCapitalize="none" onChangeText={(text) => setPassword(text)}></TextInput>
+      <TextInput value={email} style={styles.input} placeholder="Email" autoCapitalize="none" onChangeText={(text) => setEmail(text)} returnKeyType="next"
+        onSubmitEditing={() => nextInput.current.focus()}
+        blurOnSubmit={false}></TextInput>
+      <TextInput ref={nextInput} secureTextEntry={true} value={password} style={styles.input} placeholder="Mot de passe" autoCapitalize="none" onChangeText={(text) => setPassword(text)} returnKeyType="done"
+        onSubmitEditing={() => signIn()}></TextInput>
       {loading ? (
         <ActivityIndicator size='large' color="#0000ff" />
       ) : (
@@ -77,9 +82,4 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
   },
-  // button: {
-  //   alignItems: "center",
-  //   backgroundColor: "#DDDDDD",
-  //   padding: 10,
-  // },
 });

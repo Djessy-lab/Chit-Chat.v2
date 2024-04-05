@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,20 +9,20 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  uid            String?  @unique
-  prenom         String?
-  nom            String?
-  email          String   @unique
-  password       String
-  profilePicture String?
-  role           UserRole @default(USER)
-
-  Child             Child[]
-  Post              Post[]
-  SharedDocument    SharedDocument[]
-  DailyTransmission DailyTransmission[]
-  ChatMessage       ChatMessage[]
+  uid                String              @id @unique
+  prenom             String?
+  nom                String?
+  email              String              @unique
+  password           String
+  profilePicture     String?
+  role               UserRole            @default(USER)
+  children           UserChild[]
+  posts              Post[]
+  sharedDocuments    SharedDocument[]
+  dailyTransmissions DailyTransmission[]
+  chatMessages       ChatMessage[]
+  Like               Like[]
+  Comment            Comment[]
 }
 
 enum UserRole {
@@ -37,25 +31,54 @@ enum UserRole {
 }
 
 model Child {
-  id        String   @id @default(cuid())
-  name      String
-  birthDate DateTime
-  parentId  String
-  parent    User     @relation(fields: [parentId], references: [id])
+  id                 String              @id @default(cuid())
+  name               String
+  birthDate          DateTime
+  users              UserChild[]
+  posts              Post[]
+  dailyTransmissions DailyTransmission[]
+}
 
-  Post              Post[]
-  DailyTransmission DailyTransmission[]
+model UserChild {
+  userId  String
+  childId String
+  user    User   @relation(fields: [userId], references: [uid])
+  child   Child  @relation(fields: [childId], references: [id])
+
+  @@id([userId, childId])
+}
+
+model Like {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [uid])
+  postId String
+  post   Post   @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [uid])
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Post {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   content   String
   image     String?
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [uid])
   childId   String
-  child     Child    @relation(fields: [childId], references: [id])
-  createdAt DateTime @default(now())
+  child     Child     @relation(fields: [childId], references: [id])
+  createdAt DateTime  @default(now())
+  likes     Like[]
+  comments  Comment[]
 }
 
 model SharedDocument {
@@ -63,7 +86,7 @@ model SharedDocument {
   title     String
   content   String
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [uid])
   createdAt DateTime @default(now())
 }
 
@@ -74,7 +97,7 @@ model DailyTransmission {
   meals     Int
   sleep     Int
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [uid])
   childId   String
   child     Child    @relation(fields: [childId], references: [id])
   createdAt DateTime @default(now())
@@ -84,6 +107,6 @@ model ChatMessage {
   id        String   @id @default(cuid())
   content   String
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [uid])
   createdAt DateTime @default(now())
 }

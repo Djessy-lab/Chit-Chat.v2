@@ -51,3 +51,28 @@ exports.getDailyTransmissionById = async (req, res) => {
       res.status(500).json({ error: 'Erreur serveur' });
   }
 };
+
+exports.deleteDailyTransmission = async (req, res) => {
+  const { id, userId } = req.params;
+
+  try {
+    const transmission = await prisma.dailyTransmission.findUnique({
+      where: { id },
+    });
+    if (!transmission) {
+      return res.status(404).json({ message: 'Transmission non trouvée.' });
+    }
+
+    if (transmission.userId !== userId) {
+      return res.status(403).json({ message: 'Action non autorisée.' });
+    }
+
+    await prisma.dailyTransmission.delete({
+      where: { id },
+    });
+    res.status(200).json({ message: 'Transmission supprimée avec succès.' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la transmission:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};

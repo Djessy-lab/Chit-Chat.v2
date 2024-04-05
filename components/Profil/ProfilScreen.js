@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ProfileForm from "./ProfilForm";
 import { ref, getDownloadURL, uploadBytes } from 'firebase/storage';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const ProfilScreen = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
@@ -16,6 +17,8 @@ const ProfilScreen = ({ navigation }) => {
   const [role, setRole] = useState("USER");
   const [profilePicture, setProfilePicture] = useState(null);
   const [savePhoto, setSavePhoto] = useState(false);
+  const [children, setChildren] = useState([]);
+  const [selectedChildIndex, setSelectedChildIndex] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -23,14 +26,17 @@ const ProfilScreen = ({ navigation }) => {
     }
   }, [user]);
 
+
   const fetchUserProfileFromServer = async () => {
     try {
       const userProfileResponse = await fetch(`http://192.168.1.21:3000/api/user/get-user/${user.uid}`);
+
       if (userProfileResponse.ok) {
         const userProfileData = await userProfileResponse.json();
         setPrenom(userProfileData.prenom || "");
         setNom(userProfileData.nom || "");
         setRole(userProfileData.role || "USER");
+        setChildren(userProfileData.children || []);
         setProfilePicture(userProfileData.profilePicture || null);
       } else {
         console.error('Erreur lors de la récupération des données du profil:', userProfileResponse.statusText);
@@ -39,6 +45,7 @@ const ProfilScreen = ({ navigation }) => {
       console.error('Erreur lors de la récupération des données du profil:', error);
     }
   };
+
 
   const handleUpdateProfile = async () => {
     try {
@@ -135,11 +142,16 @@ const ProfilScreen = ({ navigation }) => {
     }
   };
 
+  const toggleChildSelection = (index) => {
+    setSelectedChildIndex(prevIndex => prevIndex === index ? null : index);
+  };
+
+
+
   return (
     <View style={styles.container}>
       {user && (
         <>
-          <Text style={styles.email}>Email: {user.email}</Text>
           {isProfileFormVisible ? (
             <ProfileForm
               prenom={prenom}
@@ -159,6 +171,40 @@ const ProfilScreen = ({ navigation }) => {
                   <Image source={{ uri: profilePicture || '../../assets/person.png' }} style={styles.profilePicture} />
                 </View>
               </TouchableOpacity>
+              <Text style={styles.email}>Email: {user.email}</Text>
+              <View>
+                {children.length > 0 ? (
+                  children.map((child, index) => (
+                    <View key={index} style={styles.childItem}>
+                      <View style={styles.iconContainer}>
+                        <Text style={styles.childName}>{child.name}</Text>
+                        <TouchableOpacity onPress={() => toggleChildSelection(index)}>
+                          {/* <MaterialIcons style={styles.icon} name={selectedChildIndex === index ? "info" : "info-outline"} size={24} color="black" /> */}
+                          <Image source={require('../../assets/family.png') } style={selectedChildIndex === index ? styles.iconOpacity : styles.icon}  />
+                        </TouchableOpacity>
+                      </View>
+                      {selectedChildIndex === index && (
+                        <View style={styles.tooltip}>
+                          {child.associatedUsers.length > 0 ? (
+                            child.associatedUsers.map((user, userIndex) => (
+                              <Text key={userIndex} style={styles.userInfo}>
+                                {user.prenom} {user.nom}
+                              </Text>
+                            ))
+                          ) : (
+                            <Text style={styles.userInfo}>Aucun utilisateur associé</Text>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  ))
+                ) : (
+                  <Text>Aucun enfant associé.</Text>
+                )}
+              </View>
+              <View >
+                <Text style={styles.role}>{role === 'USER' ? 'Parent' : 'Nounou'}</Text>
+              </View>
               {savePhoto && <Button title="Enregistrer la photo" onPress={handleSavePhoto} />}
               <Button title="Modifier le profil" onPress={() => setProfileFormVisibility(true)} />
               <Button title="Se déconnecter" onPress={handleSignOut} />
@@ -178,6 +224,8 @@ const styles = StyleSheet.create({
   },
   email: {
     marginVertical: 20,
+    fontSize: 14,
+    fontVariant: 'small-caps',
   },
   profilePictureContainer: {
     marginTop: 20,
@@ -188,6 +236,57 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     marginVertical: 10,
+  },
+  enfants: {
+    marginVertical: 20,
+    fontSize: 20,
+    textAlign: 'center',
+  },
+  childName: {
+    fontSize: 16,
+    fontVariant: 'small-caps',
+    textAlign: 'center',
+  },
+  role: {
+    marginTop: 20,
+    marginBottom: 20,
+    fontSize: 20,
+    fontVariant: 'small-caps',
+  },
+  childrenList: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  childItem: {
+    flexDirection: 'col',
+    alignItems: 'center',
+    padding: 4,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: 10,
+  },
+  icon: {
+    marginHorizontal: 10,
+    width: 24,
+    height: 24,
+  },
+  iconOpacity: {
+    marginHorizontal: 10,
+    width: 24,
+    height: 24,
+    opacity: 0.5,
+  },
+  tooltip: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 5,
+  },
+  userInfo: {
+    fontSize: 16,
   },
 });
 

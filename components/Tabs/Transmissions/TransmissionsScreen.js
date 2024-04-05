@@ -23,26 +23,31 @@ function TransmissionsScreen() {
   const navigation = useNavigation();
 
 
-
   useEffect(() => {
-    fetchChildren();
-    fetchDailyTransmissions();
-    const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(setUser);
-    return () => unsubscribe();
-  }, []);
+    if (children.length > 0) {
+      fetchChildren();
+      fetchDailyTransmissions();
+      const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(setUser);
+      return () => unsubscribe();
+    }
+  }, [children]);
+
+
 
   useFocusEffect(
     useCallback(() => {
       setSelectedChild(null);
       setSelectedChildId('');
       setSelectedDate('');
+      fetchDailyTransmissions();
+      fetchChildren();
     }, [])
   );
 
   const fetchChildren = async () => {
     try {
-      const response = await axios.get('http://192.168.1.21:3000/api/child');
-      setChildren(response.data);
+      const response = await axios.get(`http://192.168.1.21:3000/api/user/get-user/${user.uid}`);
+      setChildren(response.data.children);
     } catch (error) {
       console.error('Erreur lors de la récupération des enfants:', error);
     }
@@ -50,12 +55,17 @@ function TransmissionsScreen() {
 
   const fetchDailyTransmissions = async () => {
     try {
-      const response = await axios.get('http://192.168.1.21:3000/api/daily-transmissions'); // Remplacer par votre URL
-      setDailyTransmissions(response.data);
+      const response = await axios.get('http://192.168.1.21:3000/api/daily-transmissions');
+      const childIds = children.map(child => child.id);
+      const filteredTransmissions = response.data.filter(transmission =>
+        childIds.includes(transmission.childId)
+      );
+      setDailyTransmissions(filteredTransmissions);
     } catch (error) {
       console.error('Erreur lors de la récupération des transmissions:', error);
     }
   };
+
 
   const handleChildSelect = (childName) => {
     setSelectedChild(childName);
@@ -118,7 +128,7 @@ function TransmissionsScreen() {
       <ScrollView contentContainerStyle={{ alignItems: 'center', justifyContent: 'center' }}>
         {!selectedChild && (
           <>
-            <Text style={{ fontSize: 20, marginTop: 20, marginBottom: 20 }}>Sélectionner un enfant</Text>
+            <Text style={styles.header}>Sélectionner un enfant</Text>
             <Picker style={styles.picker} selectedValue={selectedChild} onValueChange={handleChildSelect}>
               {children.map((child, index) => (<Picker.Item key={index} label={child.name} value={child.name} />))}
             </Picker>
@@ -177,7 +187,14 @@ const styles = StyleSheet.create({
   },
   containerFilterMenu: {
     marginTop: 200,
-  }
+  },
+  header: {
+    fontSize: 20,
+    marginTop: 20,
+    marginBottom: 20,
+    color: '#1A1E11',
+    fontVariant: ['small-caps'],
+  },
 });
 
 export default TransmissionsScreen;
