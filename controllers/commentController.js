@@ -2,10 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const commentController = {
-  // Ajouter un commentaire à un post
   addComment: async (req, res) => {
     const { postId } = req.params;
-    const { userId, content } = req.body; // Assurez-vous que l'userId vient d'une source sécurisée (authentification)
+    const { userId, content } = req.body;
 
     try {
       const comment = await prisma.comment.create({
@@ -23,14 +22,13 @@ const commentController = {
     }
   },
 
-  // Récupérer tous les commentaires d'un post
   getComments: async (req, res) => {
     const { postId } = req.params;
 
     try {
       const comments = await prisma.comment.findMany({
         where: { postId },
-        include: { user: true }, // Inclure les détails de l'utilisateur
+        include: { user: true },
       });
 
       res.status(200).json(comments);
@@ -40,7 +38,6 @@ const commentController = {
     }
   },
 
-  // Supprimer un commentaire
   deleteComment: async (req, res) => {
     const { commentId } = req.params;
 

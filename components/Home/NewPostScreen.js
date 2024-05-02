@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Button } from 'react-native';
+import { View, Text, StyleSheet, Image, Button, TextInput } from 'react-native';
 import { TextInput as PaperTextInput, Button as PaperButton, Menu, Divider, Provider } from 'react-native-paper';
 import axios from 'axios';
 import { FIREBASE_AUTH } from '../../firebase';
@@ -23,8 +23,8 @@ const NewPostScreen = ({ navigation }) => {
 
   const fetchChildren = async () => {
     try {
-      const response = await axios.get('http://192.168.1.21:3000/api/child');
-      setChildren(response.data);
+      const response = await axios.get(`http://192.168.1.21:3000/api/user/get-user/${user.uid}`);
+      setChildren(response.data.children);
     } catch (error) {
       console.error('Erreur lors de la récupération des enfants:', error);
     }
@@ -114,13 +114,20 @@ const NewPostScreen = ({ navigation }) => {
     }
   };
 
+  const handleCancel = () => {
+    setContent('');
+    setSelectedChild(null);
+    setImage(null);
+    navigation.navigate('Home');
+  };
+
   return (
     <Provider>
       <View style={styles.container}>
         <Text style={styles.title}>Nouveau Post</Text>
 
-        <PaperTextInput
-          label="Contenu du Post"
+        <TextInput
+          placeholder="Contenu du Post"
           value={content}
           onChangeText={handleContentChange}
           multiline
@@ -160,6 +167,9 @@ const NewPostScreen = ({ navigation }) => {
         <PaperButton mode="contained" onPress={handleSubmit} style={styles.submitButton}>
           Poster
         </PaperButton>
+        <PaperButton mode="contained" onPress={handleCancel} style={styles.cancelButton}>
+          Annuler
+        </PaperButton>
       </View>
     </Provider>
   );
@@ -171,12 +181,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    marginTop: 20,
+    marginBottom: 40,
+    color: '#1A1E11',
+    fontVariant: ['small-caps'],
     textAlign: 'center',
   },
   contentInput: {
     marginBottom: 16,
+    borderWidth: 1,
+    padding: 20,
+    paddingTop: 20,
+    height: 80,
+    borderRadius: 20,
+    borderColor: '#A4D2C1',
   },
   imageInput: {
     marginBottom: 16,
@@ -198,6 +216,11 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 16,
     backgroundColor: '#84AD5B',
+  },
+
+  cancelButton: {
+    marginTop: 8,
+    backgroundColor: '#A4D2C1',
   },
 });
 

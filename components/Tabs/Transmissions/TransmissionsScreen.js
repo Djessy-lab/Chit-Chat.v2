@@ -128,9 +128,19 @@ function TransmissionsScreen() {
       <ScrollView contentContainerStyle={{ alignItems: 'center', justifyContent: 'center' }}>
         {!selectedChild && (
           <>
-            <Text style={styles.header}>Sélectionner un enfant</Text>
-            <Picker style={styles.picker} selectedValue={selectedChild} onValueChange={handleChildSelect}>
-              {children.map((child, index) => (<Picker.Item key={index} label={child.name} value={child.name} />))}
+            <Picker
+              style={styles.picker}
+              selectedValue={selectedChild}
+              onValueChange={(itemValue, itemIndex) => {
+                if (itemValue !== "header" && itemValue !== "") {
+                  handleChildSelect(itemValue);
+                }
+              }}
+            >
+              <Picker.Item label="Sélectionnez un enfant" value="header" />
+              {children.map((child, index) => (
+                <Picker.Item key={index} label={child.name} value={child.name} />
+              ))}
             </Picker>
           </>
         )}
@@ -177,16 +187,16 @@ function TransmissionsScreen() {
 
 const styles = StyleSheet.create({
   picker: {
-    height: 40,
-    width: 200,
-    padding: 10,
-    marginTop: -20,
+    height: 200,
+    width: '100%',
+    color: '#444',
+    marginTop: -30,
   },
   containerReviews: {
     marginTop: 200,
   },
   containerFilterMenu: {
-    marginTop: 200,
+    marginTop: 100,
   },
   header: {
     fontSize: 20,

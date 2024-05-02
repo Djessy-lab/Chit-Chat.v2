@@ -46,13 +46,10 @@ exports.getChild = async (req, res) => {
 
 
 exports.createChild = async (req, res) => {
-  // Logique pour créer un enfant
 };
 
 exports.updateChild = async (req, res) => {
-  // Logique pour mettre à jour un enfant
 };
 
 exports.deleteChild = async (req, res) => {
-  // Logique pour supprimer un enfant
 };

@@ -9,12 +9,13 @@ import ProfilButton from './components/Profil/ProfilButton';
 import ProfilScreen from './components/Profil/ProfilScreen';
 import HomeScreen from './components/Home/HomeScreen';
 import TransmissionsScreen from './components/Tabs/Transmissions/TransmissionsScreen';
-import DocumentsScreen from './components/Tabs/DocumentsScreen';
+import DocumentsScreen from './components/Tabs/Documents/DocumentsScreen';
 import ChatScreen from './components/Tabs/ChatScreen';
 import NewPostScreen from './components/Home/NewPostScreen';
 import AuthScreen from './components/Auth/AuthScreen';
 import TransmissionDetailsScreen from './components/Tabs/Transmissions/TransmissionDetailsScreen';
 import { Keyboard, TouchableWithoutFeedback } from 'react-native';
+import DocumentDetail from './components/Tabs/Documents/DocumentDetail';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -58,6 +59,15 @@ function TransmissionsStackScreen({ user }) {
   );
 }
 
+function DocumentsStackScreen() {
+  return (
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="DocumentsList" component={DocumentsScreen} options={{ headerShown: false, title: 'Documents' }} />
+      <Stack.Screen name="DocumentDetail" component={DocumentDetail} options={{ title: false }} />
+    </Stack.Navigator>
+  );
+}
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -85,21 +95,24 @@ export default function App() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: "#92A96F",
-          tabBarInactiveTintColor: "gray",
           tabBarIcon: ({ focused, color, size }) => null,
           tabBarLabelStyle: {
             fontSize: 12,
             color: "#FBFCF9",
             fontWeight: "bold",
-            marginBottom: 5,
+
           },
           tabBarStyle: {
             backgroundColor: "#A4D2C1",
             borderTopWidth: 1,
             borderTopColor: "lightgray",
+
           },
+          tabBarItemStyle: {
+
+          }
         }}
+
       >
         <Tab.Screen
           name="Accueil"
@@ -120,7 +133,7 @@ export default function App() {
         </Tab.Screen>
         <Tab.Screen
           name="Documents"
-          component={DocumentsScreen}
+          component={DocumentsStackScreen}
           options={({ navigation }) => ({
             headerRight: () => <ProfilButton disabled={!user} />,
             ...screenOptions,

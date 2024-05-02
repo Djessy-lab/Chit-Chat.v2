@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { FIREBASE_AUTH } from "../../firebase";
-import { StyleSheet, Text, TextInput, View, Button, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, TextInput, View, Button, ActivityIndicator, Image } from "react-native";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import axios from "axios";
 
@@ -49,6 +49,7 @@ const AuthScreen = () => {
 
   return (
     <View style={styles.container}>
+      <Image source={require('../../assets/logo.png')} style={{ width: 200, height: 120, marginTop: 30, marginBottom: 30 }} />
       <TextInput value={email} style={styles.input} placeholder="Email" autoCapitalize="none" onChangeText={(text) => setEmail(text)} returnKeyType="next"
         onSubmitEditing={() => nextInput.current.focus()}
         blurOnSubmit={false}></TextInput>
@@ -58,8 +59,10 @@ const AuthScreen = () => {
         <ActivityIndicator size='large' color="#0000ff" />
       ) : (
         <>
-          <Button title="Se connecter" onPress={() => signIn()} />
-          <Button title="Créer un compte" onPress={() => signUp()} />
+          <View style={styles.buttonContainer}>
+            <Button style={styles.button} title="Se connecter" onPress={() => signIn()} />
+            <Button style={styles.button} title="Créer un compte" onPress={() => signUp()} />
+          </View>
         </>
       )}
     </View>
@@ -70,16 +73,23 @@ export default AuthScreen;
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
+    marginHorizontal: 30,
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
   },
   input: {
     marginVertical: 4,
+    width: '100%',
     height: 50,
     borderWidth: 1,
-    borderRadius: 4,
+    borderColor: "#A4D2C1",
+    borderRadius: 30,
     padding: 10,
     backgroundColor: "#fff",
+  },
+
+  buttonContainer: {
+    marginTop: 30,
   },
 });

@@ -37,6 +37,7 @@ model Child {
   users              UserChild[]
   posts              Post[]
   dailyTransmissions DailyTransmission[]
+  SharedDocument     SharedDocument[]
 }
 
 model UserChild {
@@ -87,6 +88,8 @@ model SharedDocument {
   content   String
   userId    String
   user      User     @relation(fields: [userId], references: [uid])
+  childId   String? 
+  child     Child?   @relation(fields: [childId], references: [id])
   createdAt DateTime @default(now())
 }
 
